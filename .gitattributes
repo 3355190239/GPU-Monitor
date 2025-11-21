@@ -1,3 +1,2 @@
-# 表示类型是Java
-*.py linguist-language=python
+# 表示类型是python
 *.html linguist-language=python
