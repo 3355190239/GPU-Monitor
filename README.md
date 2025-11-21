@@ -8,7 +8,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![BasedOn](https://img.shields.io/badge/based%20on-gpuview-orange)
 
-
+## 📸 截图预览
 <img width="1872" height="924" alt="image" src="https://github.com/user-attachments/assets/8eb3c38c-7bcc-49fc-8774-94d35d672c61" />
 <img width="1872" height="924" alt="image" src="https://github.com/user-attachments/assets/0645425f-8deb-426c-9277-ee321c39688c" />
 
@@ -131,9 +131,8 @@ sudo systemctl enable gpu-monitor
 sudo systemctl start gpu-monitor
 ```
 
-## 📸 截图预览
 
-*(请在此处放入您的运行截图，例如 imgs/screenshot.png)*
+
 
 ## 📄 许可证
 
