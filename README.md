@@ -9,7 +9,9 @@
 ![BasedOn](https://img.shields.io/badge/based%20on-gpuview-orange)
 
 ## 📸 截图预览
-<img width="1872" height="924" alt="image" src="https://github.com/user-attachments/assets/8eb3c38c-7bcc-49fc-8774-94d35d672c61" />
+
+<img width="1872" height="924" alt="image" src="https://github.com/user-attachments/assets/35c8db4a-afbb-4219-b486-a4277c3d365e" />
+
 <img width="1872" height="924" alt="image" src="https://github.com/user-attachments/assets/0645425f-8deb-426c-9277-ee321c39688c" />
 
 ## 📖 项目简介 (Introduction)
