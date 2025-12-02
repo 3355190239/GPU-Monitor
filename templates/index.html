@@ -13,6 +13,13 @@
         /* 细微调整，防止数字变化时卡片抖动 */
         .gpu-card-val { font-variant-numeric: tabular-nums; }
         .card-footer .col-3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 添加到你的 <style> 标签中 */
+.progress-subtle {
+    height: 6px;
+    background-color: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    margin-top: 4px;
+}
     </style>
 </head>
 
@@ -82,7 +89,6 @@
                         <small><a href="https://github.com/3355190239/GPU-Monitor" class="text-white" style="text-decoration: none"><i class="fab fa-github"></i> YuanZ/GPU Monitor | 2025</a></small>
             </div>
         </footer>
-
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -169,114 +175,235 @@
         }
 
         // === 卡片更新逻辑 (Diff 更新，不重绘) ===
-        function updateCards(gpustats) {
-            const container = document.getElementById('gpu-cards-container');
+        // function updateCards(gpustats) {
+        //     const container = document.getElementById('gpu-cards-container');
 
-            // 用一个 Set 记录本次更新存在的卡片 ID，用于后续清理掉线的机器
-            const activeCardIds = new Set();
+        //     // 用一个 Set 记录本次更新存在的卡片 ID，用于后续清理掉线的机器
+        //     const activeCardIds = new Set();
 
-            gpustats.forEach(node => {
-                node.gpus.forEach(gpu => {
-                    // 生成唯一 ID: nodeName-gpuIndex
-                    // 简单的清理特殊字符防止 ID 非法
-                    const safeHost = node.hostname.replace(/[^a-zA-Z0-9]/g, '');
-                    const cardId = `card-${safeHost}-${gpu.index}`;
-                    activeCardIds.add(cardId);
+        //     gpustats.forEach(node => {
+        //         node.gpus.forEach(gpu => {
+        //             // 生成唯一 ID: nodeName-gpuIndex
+        //             // 简单的清理特殊字符防止 ID 非法
+        //             const safeHost = node.hostname.replace(/[^a-zA-Z0-9]/g, '');
+        //             const cardId = `card-${safeHost}-${gpu.index}`;
+        //             activeCardIds.add(cardId);
 
-                    let cardEl = document.getElementById(cardId);
+        //             let cardEl = document.getElementById(cardId);
 
-                    // 计算颜色
-                    const temp = gpu['temperature.gpu'];
-                    let colorClass = 'bg-primary'; // Cool
-                    if (temp > 75) colorClass = 'bg-danger';     // Hot
-                    else if (temp > 50) colorClass = 'bg-warning'; // Warm
-                    else if (temp > 25) colorClass = 'bg-success'; // Normal
+        //             // 计算颜色
+        //             const temp = gpu['temperature.gpu'];
+        //             let colorClass = 'bg-primary'; // Cool
+        //             if (temp > 75) colorClass = 'bg-danger';     // Hot
+        //             else if (temp > 50) colorClass = 'bg-warning'; // Warm
+        //             else if (temp > 25) colorClass = 'bg-success'; // Normal
 
-                    // 如果是 connection error
-                    if (node.error || gpu.index === "Err") colorClass = 'bg-secondary';
+        //             // 如果是 connection error
+        //             if (node.error || gpu.index === "Err") colorClass = 'bg-secondary';
 
-                    // tooltip 内容
-                    const tooltipContent = `
-                        <div class='text-start small'>
-                            <strong>Node:</strong> ${node.hostname}<br>
-                            <strong>Device:</strong> ${gpu.name} [${gpu.index}]<br>
-                            <strong>Processes:</strong><br>${gpu['user_processes'] || 'None'}
+        //             // tooltip 内容
+        //             const tooltipContent = `
+        //                 <div class='text-start small'>
+        //                     <strong>Node:</strong> ${node.hostname}<br>
+        //                     <strong>Device:</strong> ${gpu.name} [${gpu.index}]<br>
+        //                     <strong>Processes:</strong><br>${gpu['user_processes'] || 'None'}
+        //                 </div>
+        //             `;
+
+        //             if (!cardEl) {
+        //                 // === 创建新卡片 ===
+        //                 const html = `
+        //                 <div class="col-xl-3 col-md-4 col-sm-6 mb-3 fade-in-card" id="${cardId}">
+        //                     <div class="card text-white ${colorClass} h-100 shadow-sm">
+        //                         <div class="card-body pb-2">
+        //                             <div class="d-flex justify-content-between align-items-center mb-2">
+        //                                 <div class="fw-bold"><i class="fas fa-server me-1"></i> ${node.hostname}</div>
+        //                                 <span class="badge bg-dark bg-opacity-25 gpu-index">#${gpu.index}</span>
+        //                             </div>
+        //                             <div class="small text-truncate mb-2" title="${gpu.name}">${gpu.name}</div>
+        //                             <div class="d-flex justify-content-between small">
+        //                                 <span>Power: <span class="gpu-power fw-bold">${gpu['power.draw']}</span>/${gpu['enforced.power.limit']}W</span>
+        //                             </div>
+        //                         </div>
+        //                         <div class="card-footer text-white small bg-black bg-opacity-10 border-0">
+        //                             <div class="row text-center g-1">
+        //                                 <div class="col-3" title="Temp">
+        //                                     <i class="fas fa-thermometer-half"></i> <span class="gpu-temp fw-bold">${gpu['temperature.gpu']}</span>°C
+        //                                 </div>
+        //                                 <div class="col-3" title="Memory">
+        //                                     <i class="fas fa-memory"></i> <span class="gpu-mem fw-bold">${gpu.memory}</span>%
+        //                                 </div>
+        //                                 <div class="col-3" title="Util">
+        //                                     <i class="fas fa-tachometer-alt"></i> <span class="gpu-util fw-bold">${gpu['utilization.gpu']}</span>%
+        //                                 </div>
+        //                                 <div class="col-3" title="Users">
+        //                                     <i class="fas fa-users"></i> <span class="gpu-users fw-bold">${gpu.users}</span>
+        //                                 </div>
+        //                             </div>
+        //                         </div>
+        //                     </div>
+        //                 </div>`;
+        //                 container.insertAdjacentHTML('beforeend', html);
+        //                 cardEl = document.getElementById(cardId); // 获取刚插入的元素引用
+
+        //                 // 初始化 Tooltip
+        //                 new bootstrap.Tooltip(cardEl.querySelector('.card'), {
+        //                     html: true,
+        //                     title: tooltipContent
+        //                 });
+
+        //             } else {
+        //                 // === 更新现有卡片 ===
+        //                 const cardInner = cardEl.querySelector('.card');
+
+        //                 // 1. 更新背景色 (如果变了)
+        //                 // 移除旧的 bg-* 类，添加新的
+        //                 cardInner.className = cardInner.className.replace(/bg-(primary|success|warning|danger|secondary)/, colorClass);
+
+        //                 // 2. 更新文本数值
+        //                 cardEl.querySelector('.gpu-power').textContent = gpu['power.draw'];
+        //                 cardEl.querySelector('.gpu-temp').textContent = gpu['temperature.gpu'];
+        //                 cardEl.querySelector('.gpu-mem').textContent = gpu.memory;
+        //                 cardEl.querySelector('.gpu-util').textContent = gpu['utilization.gpu'];
+        //                 cardEl.querySelector('.gpu-users').textContent = gpu.users;
+
+        //                 // 3. 更新 Tooltip (Bootstrap 5 方式)
+        //                 const tooltip = bootstrap.Tooltip.getInstance(cardInner);
+        //                 if(tooltip) {
+        //                     tooltip.setContent({ '.tooltip-inner': tooltipContent });
+        //                 }
+        //             }
+        //         });
+        //     });
+        // === 卡片更新逻辑 (修改版：中间显示显存条，底部显示功耗) ===
+        
+function updateCards(gpustats) {
+    const container = document.getElementById('gpu-cards-container');
+    const activeCardIds = new Set();
+
+    gpustats.forEach(node => {
+        node.gpus.forEach(gpu => {
+            const safeHost = node.hostname.replace(/[^a-zA-Z0-9]/g, '');
+            const cardId = `card-${safeHost}-${gpu.index}`;
+            activeCardIds.add(cardId);
+
+            let cardEl = document.getElementById(cardId);
+
+            // 1. 计算颜色状态 (保持原版逻辑)
+            const temp = gpu['temperature.gpu'];
+            let colorClass = 'bg-primary'; // Cool
+            if (temp > 75) colorClass = 'bg-danger';     // Hot
+            else if (temp > 50) colorClass = 'bg-warning'; // Warm
+            else if (temp > 25) colorClass = 'bg-success'; // Normal
+            if (node.error || gpu.index === "Err") colorClass = 'bg-secondary';
+
+            // 2. 准备数据
+            const memUsedGB = (gpu['memory.used'] / 1024).toFixed(1); // 假设单位是MB转GB
+            const memTotalGB = (gpu['memory.total'] / 1024).toFixed(0);
+            const memPercent = gpu.memory; // 百分比
+
+            // Tooltip 内容
+            const tooltipContent = `
+                <div class='text-start small'>
+                    <strong>Node:</strong> ${node.hostname}<br>
+                    <strong>Device:</strong> ${gpu.name} [${gpu.index}]<br>
+                    <strong>Processes:</strong><br>${gpu['user_processes'] || 'None'}
+                </div>
+            `;
+
+            if (!cardEl) {
+                // === 创建新卡片 ===
+                const html = `
+                <div class="col-xl-3 col-md-4 col-sm-6 mb-3 fade-in-card" id="${cardId}">
+                    <div class="card text-white ${colorClass} h-100 shadow-sm">
+                        <div class="card-body pb-2">
+                            <!-- 头部：主机名 & GPU ID -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-bold"><i class="fas fa-server me-1"></i> ${node.hostname}</div>
+                                <span class="badge bg-dark bg-opacity-25 gpu-index">${gpu.index}</span>
+                            </div>
+                            <div class="small text-truncate mb-3" title="${gpu.name}">${gpu.name}</div>
+                            
+                            <!-- 修改部分：这里原本是 Power，现在改为 Memory 进度条 -->
+                            <div class="d-flex justify-content-between small">
+                                <span>Memory</span>
+                                <span class="gpu-mem-text opacity-75">${memUsedGB}/${memTotalGB} GB</span>
+                            </div>
+                            <div class="progress progress-subtle">
+                                <div class="progress-bar bg-light" role="progressbar" style="width: ${memPercent}%"></div>
+                            </div>
+                            <!-- 
+                            <div class="d-flex justify-content-between small">
+                                <span>Power: <span class="gpu-power fw-bold">${gpu['power.draw']}</span>/${gpu['enforced.power.limit']}W</span>
+                            </div> -->
                         </div>
-                    `;
 
-                    if (!cardEl) {
-                        // === 创建新卡片 ===
-                        const html = `
-                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3 fade-in-card" id="${cardId}">
-                            <div class="card text-white ${colorClass} h-100 shadow-sm">
-                                <div class="card-body pb-2">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div class="fw-bold"><i class="fas fa-server me-1"></i> ${node.hostname}</div>
-                                        <span class="badge bg-dark bg-opacity-25 gpu-index">#${gpu.index}</span>
-                                    </div>
-                                    <div class="small text-truncate mb-2" title="${gpu.name}">${gpu.name}</div>
-                                    <div class="d-flex justify-content-between small">
-                                        <span>Power: <span class="gpu-power fw-bold">${gpu['power.draw']}</span>/${gpu['enforced.power.limit']}W</span>
-                                    </div>
+                        <!-- 底部：4个格子 (把原本的 Mem 改成了 Power) -->
+                        <div class="card-footer text-white small bg-black bg-opacity-10 border-0">
+                            <div class="row text-center g-1">
+                                <div class="col-3" title="Temp">
+                                    <i class="fas fa-thermometer-half"></i> <span class="gpu-temp fw-bold">${gpu['temperature.gpu']}</span>°
                                 </div>
-                                <div class="card-footer text-white small bg-black bg-opacity-10 border-0">
-                                    <div class="row text-center g-1">
-                                        <div class="col-3" title="Temp">
-                                            <i class="fas fa-thermometer-half"></i> <span class="gpu-temp fw-bold">${gpu['temperature.gpu']}</span>°C
-                                        </div>
-                                        <div class="col-3" title="Memory">
-                                            <i class="fas fa-memory"></i> <span class="gpu-mem fw-bold">${gpu.memory}</span>%
-                                        </div>
-                                        <div class="col-3" title="Util">
-                                            <i class="fas fa-tachometer-alt"></i> <span class="gpu-util fw-bold">${gpu['utilization.gpu']}</span>%
-                                        </div>
-                                        <div class="col-3" title="Users">
-                                            <i class="fas fa-users"></i> <span class="gpu-users fw-bold">${gpu.users}</span>
-                                        </div>
-                                    </div>
+                                <div class="col-3" title="Power (Draw/Limit)">
+                                    <!-- 这里的图标改成闪电，类名改成 gpu-power -->
+                                    <i class="fas fa-bolt"></i> <span class="gpu-power fw-bold">${gpu['power.draw']}</span>W
+                                </div>
+                                <div class="col-3" title="Util">
+                                    <i class="fas fa-tachometer-alt"></i> <span class="gpu-util fw-bold">${gpu['utilization.gpu']}</span>%
+                                </div>
+                                <div class="col-3" title="Users">
+                                    <i class="fas fa-users"></i> <span class="gpu-users fw-bold">${gpu.users}</span>
                                 </div>
                             </div>
-                        </div>`;
-                        container.insertAdjacentHTML('beforeend', html);
-                        cardEl = document.getElementById(cardId); // 获取刚插入的元素引用
-
-                        // 初始化 Tooltip
-                        new bootstrap.Tooltip(cardEl.querySelector('.card'), {
-                            html: true,
-                            title: tooltipContent
-                        });
-
-                    } else {
-                        // === 更新现有卡片 ===
-                        const cardInner = cardEl.querySelector('.card');
-
-                        // 1. 更新背景色 (如果变了)
-                        // 移除旧的 bg-* 类，添加新的
-                        cardInner.className = cardInner.className.replace(/bg-(primary|success|warning|danger|secondary)/, colorClass);
-
-                        // 2. 更新文本数值
-                        cardEl.querySelector('.gpu-power').textContent = gpu['power.draw'];
-                        cardEl.querySelector('.gpu-temp').textContent = gpu['temperature.gpu'];
-                        cardEl.querySelector('.gpu-mem').textContent = gpu.memory;
-                        cardEl.querySelector('.gpu-util').textContent = gpu['utilization.gpu'];
-                        cardEl.querySelector('.gpu-users').textContent = gpu.users;
-
-                        // 3. 更新 Tooltip (Bootstrap 5 方式)
-                        const tooltip = bootstrap.Tooltip.getInstance(cardInner);
-                        if(tooltip) {
-                            tooltip.setContent({ '.tooltip-inner': tooltipContent });
-                        }
-                    }
+                        </div>
+                    </div>
+                </div>`;
+                
+                container.insertAdjacentHTML('beforeend', html);
+                cardEl = document.getElementById(cardId);
+                
+                // 初始化 Tooltip
+                new bootstrap.Tooltip(cardEl.querySelector('.card'), {
+                    html: true,
+                    title: tooltipContent
                 });
-            });
 
-            // 清理已经消失的显卡（防止拔掉显卡后还显示）
-            Array.from(container.children).forEach(child => {
-                if (!activeCardIds.has(child.id)) {
-                    child.remove();
+            } else {
+                // === 更新现有卡片 (Diff Update) ===
+                const cardInner = cardEl.querySelector('.card');
+                
+                // 1. 更新背景色
+                cardInner.className = cardInner.className.replace(/bg-(primary|success|warning|danger|secondary)/, colorClass);
+
+                // 2. 更新显存进度条和文字 (New)
+                const progressBar = cardEl.querySelector('.progress-bar');
+                progressBar.style.width = `${memPercent}%`;
+                cardEl.querySelector('.gpu-mem-text').textContent = `${memUsedGB}/${memTotalGB} GB`;
+
+                // 3. 更新底部数据 (注意：现在第二个格子是 Power)
+                cardEl.querySelector('.gpu-temp').textContent = gpu['temperature.gpu'];
+                cardEl.querySelector('.gpu-power').textContent = gpu['power.draw']; // 更新功耗
+                cardEl.querySelector('.gpu-util').textContent = gpu['utilization.gpu'];
+                cardEl.querySelector('.gpu-users').textContent = gpu.users;
+
+                // 4. 更新 Tooltip
+                const tooltip = bootstrap.Tooltip.getInstance(cardInner);
+                if(tooltip) {
+                    tooltip.setContent({ '.tooltip-inner': tooltipContent });
                 }
-            });
+            }
+        });
+    });
+
+    // 清理掉线卡片
+    Array.from(container.children).forEach(child => {
+        if (!activeCardIds.has(child.id)) {
+            child.remove();
         }
+    });
+}
+
+
 
         // === 表格更新逻辑 (保持状态) ===
         function updateTable(gpustats) {
@@ -306,7 +433,7 @@
 
             dataTable.clear();
             dataTable.rows.add(newData);
-            dataTable.draw(false);
+            dataTable.draw(false); 
         }
     </script>
 </body>
