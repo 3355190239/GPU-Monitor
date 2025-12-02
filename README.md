@@ -72,7 +72,6 @@ pip install flask paramiko
 ### 2. 配置服务器列表 (`config.ini`)
 
 在根目录新建 `config.ini`。
-**技巧**：`[]` 里的名字会直接显示在网页卡片标题上，支持中文。
 
 ```ini
 [server1]
